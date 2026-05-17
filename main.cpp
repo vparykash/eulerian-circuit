@@ -247,3 +247,38 @@ void find_euler_circuit(Graph* g, int start)
     free(path);
     free(circ);
 }
+
+void print_graph(Graph* g)
+{
+    printf("Graph: %d vertices, %d edges\n", g->n, g->m);
+    for (int i = 0; i < g->n; i++) {
+        printf("  %d (out=%d, in=%d) ->",
+            g->v[i].id, g->v[i].out_deg, g->v[i].in_deg);
+        for (AdjNode* p = g->v[i].adj; p; p = p->next)
+            printf(" %d", g->v[p->dest].id);
+        printf("\n");
+    }
+}
+
+void process_graph(Graph* g, const char* label)
+{
+    printf("\n=== %s ===\n", label);
+    print_graph(g);
+    printf("Checking Eulerian circuit:\n");
+
+    if (!eulerian_circuit_exists(g)) {
+        printf("  Eulerian circuit does NOT exist\n");
+        return;
+    }
+    printf("  Eulerian circuit EXISTS\n\n");
+
+    int start = 0;
+    while (start < g->n && !g->v[start].out_deg)
+        start++;
+    if (start == g->n) {
+        printf("  (No edges.)\n");
+        return;
+    }
+
+    find_euler_circuit(g, start);
+}
