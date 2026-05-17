@@ -70,3 +70,43 @@ void free_graph(Graph* g)
     free(g->v);
     free(g);
 }
+
+Graph* read_graph(FILE* fp)
+{
+    int n, m;
+    if (!fp) {
+        printf("Enter number of vertices and edges: ");
+        if (scanf_s("%d %d", &n, &m) != 2 || n <= 0 || m < 0) {
+            fprintf(stderr, "Invalid input.\n");
+            return NULL;
+        }
+    }
+    else {
+        if (fscanf_s(fp, "%d %d", &n, &m) != 2 || n <= 0 || m < 0) {
+            fprintf(stderr, "Invalid file format.\n");
+            return NULL;
+        }
+    }
+
+    Graph* g = create_graph(n);
+
+    if (!fp)
+        printf("Enter %d directed edges (u v), vertices numbered 1..%d:\n", m, n);
+
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        if (!fp) { printf("  Edge %d: ", i + 1); }
+        if ((fp ? fscanf_s(fp, "%d %d", &u, &v) : scanf_s("%d %d", &u, &v)) != 2) {
+            fprintf(stderr, "Invalid input.\n");
+            free_graph(g);
+            return NULL;
+        }
+        if (u < 1 || u > n || v < 1 || v > n) {
+            fprintf(stderr, "Vertex label out of range.\n");
+            free_graph(g);
+            return NULL;
+        }
+        add_edge(g, u - 1, v - 1);
+    }
+    return g;
+}
