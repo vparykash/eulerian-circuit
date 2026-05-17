@@ -110,3 +110,92 @@ Graph* read_graph(FILE* fp)
     }
     return g;
 }
+
+int is_weakly_connected(Graph* g)
+{
+    int start = -1;
+    for (int i = 0; i < g->n; i++)
+        if (g->v[i].out_deg || g->v[i].in_deg) { 
+            start = i;
+            break;
+        }
+    if (start == -1)
+        return 1;
+
+    AdjNode** rev = (AdjNode**)calloc(g->n, sizeof(AdjNode*));
+    if (!rev)
+        return 0;
+    for (int u = 0; u < g->n; u++)
+        for (AdjNode* p = g->v[u].adj; p; p = p->next) {
+            AdjNode* rn = (AdjNode*)malloc(sizeof(AdjNode));
+            if (!rn) {
+                fprintf(stderr, "Out of memory.\n");
+                exit(1);
+            }
+            rn->dest = u;
+            rn->used = 0;
+            rn->next = rev[p->dest];
+            rev[p->dest] = rn;
+        }
+
+    int* vis = (int*)calloc(g->n, sizeof(int));
+    int* queue = (int*)malloc(g->n * sizeof(int));
+    if (!vis || !queue) {
+        fprintf(stderr, "Out of memory.\n");
+        exit(1);
+    }
+    int head = 0, tail = 0;
+    vis[start] = 1;
+    queue[tail++] = start;
+
+    while (head < tail) {
+        int u = queue[head++];
+        for (AdjNode* p = g->v[u].adj; p; p = p->next)
+            if (!vis[p->dest]) {
+                vis[p->dest] = 1;
+                queue[tail++] = p->dest;
+            }
+        for (AdjNode* p = rev[u]; p; p = p->next)
+            if (!vis[p->dest]) {
+                vis[p->dest] = 1;
+                queue[tail++] = p->dest;
+            }
+    }
+
+    int ok = 1;
+    for (int i = 0; i < g->n; i++)
+        if ((g->v[i].out_deg || g->v[i].in_deg) && !vis[i]) {
+            ok = 0; break;
+        }
+
+    for (int i = 0; i < g->n; i++) {
+        AdjNode* cur = rev[i];
+        while (cur) {
+            AdjNode* t = cur->next;
+            free(cur);
+            cur = t;
+        }
+    }
+    free(rev);
+    free(vis);
+    free(queue);
+    return ok;
+}
+
+int eulerian_circuit_exists(Graph* g)
+{
+    if (!is_weakly_connected(g)) {
+        printf("  Graph is NOT weakly connected.\n");
+        return 0;
+    }
+    int ok = 1;
+    for (int i = 0; i < g->n; i++)
+        if (g->v[i].out_deg != g->v[i].in_deg) {
+            printf("  Vertex %d: out=%d, in=%d\n",
+                g->v[i].id, g->v[i].out_deg, g->v[i].in_deg);
+            ok = 0;
+        }
+    if (!ok)
+        printf("  In/out-degree mismatch.\n");
+    return ok;
+}
