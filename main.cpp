@@ -199,3 +199,51 @@ int eulerian_circuit_exists(Graph* g)
         printf("  In/out-degree mismatch.\n");
     return ok;
 }
+
+void find_euler_circuit(Graph* g, int start)
+{
+    int pcap = g->m + 2, ptop = 0;
+    int* path = (int*)malloc(pcap * sizeof(int));
+    int ccap = g->m + 1, clen = 0;
+    int* circ = (int*)malloc(ccap * sizeof(int));
+    if (!path || !circ) {
+        fprintf(stderr, "Out of memory.\n");
+        free(path);
+        free(circ);
+        return;
+    }
+
+    path[ptop++] = start;
+
+    while (ptop) {
+        int u = path[ptop - 1];
+        AdjNode* p = g->v[u].adj;
+        while (p && p->used)
+            p = p->next;
+        if (p) {
+            p->used = 1;
+            g->v[u].out_deg--;
+            if (ptop == pcap) {
+                pcap *= 2;
+                int* tmp = (int*)realloc(path, pcap * sizeof(int));
+                if (tmp)
+                    path = tmp;
+            }
+            path[ptop++] = p->dest;
+        }
+        else {
+            circ[clen++] = path[--ptop];
+        }
+    }
+
+    printf("  Eulerian circuit (%d edges):\n  ", clen - 1);
+    for (int i = clen - 1; i >= 0; i--) {
+        printf("%d", g->v[circ[i]].id);
+        if (i > 0)
+            printf(" -> ");
+    }
+    printf("\n  Circuit length: %d\n", clen - 1);
+
+    free(path);
+    free(circ);
+}
