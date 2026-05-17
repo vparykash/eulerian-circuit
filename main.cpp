@@ -282,3 +282,72 @@ void process_graph(Graph* g, const char* label)
 
     find_euler_circuit(g, start);
 }
+
+void show_menu(void)
+{
+    int choice;
+    char filename[256] = { 0 };
+
+    while (1) {
+        printf("\n=== MENU ===\n"
+            " 1. Load graph from file\n"
+            " 2. Enter graph manually\n"
+            " 3. Exit\n"
+            "Choice: ");
+
+        if (scanf_s("%d", &choice) != 1) {
+            while (getchar() != '\n');
+            continue;
+        }
+
+        Graph* g = NULL;
+        switch (choice) {
+        case 1: {
+            printf("Filename: ");
+            scanf_s("%255s", filename, (unsigned)sizeof(filename));
+            FILE* fp = NULL;
+            fopen_s(&fp, filename, "r");
+            if (!fp) { fprintf(stderr, "Cannot open '%s'.\n", filename); break; }
+            g = read_graph(fp);
+            fclose(fp);
+            if (g) { process_graph(g, filename); free_graph(g); }
+            break;
+        }
+        case 2:
+            g = read_graph(NULL);
+            if (g) { process_graph(g, "user input"); free_graph(g); }
+            break;
+        case 3:
+            printf("Goodbye!\n");
+            return;
+        default:
+            printf("Invalid choice.\n");
+        }
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    printf("=== Eulerian Circuit Finder ===\n");
+
+    if (argc >= 2) {
+        for (int i = 1; i < argc; i++) {
+            FILE* fp = NULL;
+            fopen_s(&fp, argv[i], "r");
+            if (!fp) {
+                fprintf(stderr, "Cannot open '%s'.\n", argv[i]);
+                continue;
+            }
+            Graph* g = read_graph(fp);
+            fclose(fp);
+            if (g) {
+                process_graph(g, argv[i]);
+                free_graph(g);
+            }
+        }
+    }
+    else {
+        show_menu();
+    }
+    return 0;
+}
